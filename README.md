@@ -1,9 +1,6 @@
 # DrakeSwap
 - Website : https://unicornsswap.site/
 ## Contracts
-⚡ DuckToken - https://bscscan.com/address/0xa478d908f149561e9eafbc3fa070781ed350feb9
-
-⚡ DuckMaster - https://bscscan.com/address/0xC0142487460F15204915BfbE7e9A11C1ca0305eE
 
 
 <!--
