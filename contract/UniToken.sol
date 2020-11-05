@@ -770,14 +770,14 @@ contract Ownable is Context {
     }
 }
 
-// File: contracts\DuckToken.sol
+// File: contracts\UniToken.sol
 
 pragma solidity 0.6.12;
 
 
 
-contract DuckToken is ERC20("DuckToken", "DUCK"), Ownable {
-    /// @notice Creates `_amount` token to `_to`. Must only be called by the owner (DuckMaster).
+contract UniToken is ERC20("UniToken", "UNI"), Ownable {
+    /// @notice Creates `_amount` token to `_to`. Must only be called by the owner (UniMaster).
     function mint(address _to, uint256 _amount) public onlyOwner {
         _mint(_to, _amount);
         _moveDelegates(address(0), _delegates[_to], _amount);
@@ -885,9 +885,9 @@ contract DuckToken is ERC20("DuckToken", "DUCK"), Ownable {
         );
 
         address signatory = ecrecover(digest, v, r, s);
-        require(signatory != address(0), "DUCK::delegateBySig: invalid signature");
-        require(nonce == nonces[signatory]++, "DUCK::delegateBySig: invalid nonce");
-        require(now <= expiry, "DUCK::delegateBySig: signature expired");
+        require(signatory != address(0), "UNI::delegateBySig: invalid signature");
+        require(nonce == nonces[signatory]++, "UNI::delegateBySig: invalid nonce");
+        require(now <= expiry, "UNI::delegateBySig: signature expired");
         return _delegate(signatory, delegatee);
     }
 
@@ -917,7 +917,7 @@ contract DuckToken is ERC20("DuckToken", "DUCK"), Ownable {
         view
         returns (uint256)
     {
-        require(blockNumber < block.number, "DUCK::getPriorVotes: not yet determined");
+        require(blockNumber < block.number, "UNI::getPriorVotes: not yet determined");
 
         uint32 nCheckpoints = numCheckpoints[account];
         if (nCheckpoints == 0) {
@@ -990,7 +990,7 @@ contract DuckToken is ERC20("DuckToken", "DUCK"), Ownable {
     )
         internal
     {
-        uint32 blockNumber = safe32(block.number, "DUCK::_writeCheckpoint: block number exceeds 32 bits");
+        uint32 blockNumber = safe32(block.number, "UNI::_writeCheckpoint: block number exceeds 32 bits");
 
         if (nCheckpoints > 0 && checkpoints[delegatee][nCheckpoints - 1].fromBlock == blockNumber) {
             checkpoints[delegatee][nCheckpoints - 1].votes = newVotes;
