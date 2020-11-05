@@ -1,7 +1,3 @@
-/**
- *Submitted for verification at BscScan.com on 2020-10-15
-*/
-
 pragma solidity =0.6.12;
 
 interface IUniswapV2Factory {
@@ -44,8 +40,8 @@ library SafeMathUniswap {
 contract UniswapV2ERC20 {
     using SafeMathUniswap for uint;
 
-    string public constant name = 'DrakeSwap LP';
-    string public constant symbol = 'DLP';
+    string public constant name = 'Uncorns LP';
+    string public constant symbol = 'UNI';
     uint8 public constant decimals = 18;
     uint  public totalSupply;
     mapping(address => uint) public balanceOf;
