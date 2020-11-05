@@ -1091,14 +1091,14 @@ contract ERC20 is Context, IERC20 {
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual { }
 }
 
-// File: contracts\DuckToken.sol
+// File: contracts\UniToken.sol
 
 pragma solidity 0.6.12;
 
 
 
-contract DuckToken is ERC20("DuckToken", "DUCK"), Ownable {
-    /// @notice Creates `_amount` token to `_to`. Must only be called by the owner (DuckMaster).
+contract UniToken is ERC20("UniToken", "UNI"), Ownable {
+    /// @notice Creates `_amount` token to `_to`. Must only be called by the owner (UniMaster).
     function mint(address _to, uint256 _amount) public onlyOwner {
         _mint(_to, _amount);
         _moveDelegates(address(0), _delegates[_to], _amount);
@@ -1205,9 +1205,9 @@ contract DuckToken is ERC20("DuckToken", "DUCK"), Ownable {
         );
 
         address signatory = ecrecover(digest, v, r, s);
-        require(signatory != address(0), "DUCK::delegateBySig: invalid signature");
-        require(nonce == nonces[signatory]++, "DUCK::delegateBySig: invalid nonce");
-        require(now <= expiry, "DUCK::delegateBySig: signature expired");
+        require(signatory != address(0), "UNI::delegateBySig: invalid signature");
+        require(nonce == nonces[signatory]++, "UNI::delegateBySig: invalid nonce");
+        require(now <= expiry, "UNI::delegateBySig: signature expired");
         return _delegate(signatory, delegatee);
     }
 
@@ -1237,7 +1237,7 @@ contract DuckToken is ERC20("DuckToken", "DUCK"), Ownable {
         view
         returns (uint256)
     {
-        require(blockNumber < block.number, "DUCK::getPriorVotes: not yet determined");
+        require(blockNumber < block.number, "UNI::getPriorVotes: not yet determined");
 
         uint32 nCheckpoints = numCheckpoints[account];
         if (nCheckpoints == 0) {
@@ -1310,7 +1310,7 @@ contract DuckToken is ERC20("DuckToken", "DUCK"), Ownable {
     )
         internal
     {
-        uint32 blockNumber = safe32(block.number, "DUCK::_writeCheckpoint: block number exceeds 32 bits");
+        uint32 blockNumber = safe32(block.number, "UNI::_writeCheckpoint: block number exceeds 32 bits");
 
         if (nCheckpoints > 0 && checkpoints[delegatee][nCheckpoints - 1].fromBlock == blockNumber) {
             checkpoints[delegatee][nCheckpoints - 1].votes = newVotes;
@@ -1334,17 +1334,17 @@ contract DuckToken is ERC20("DuckToken", "DUCK"), Ownable {
     }
 }
 
-// File: contracts\DuckMaster.sol
+// File: contracts\UniMaster.sol
 
 pragma solidity 0.6.12;
 
-// DuckMaster is the hub that accumulates and distributes DUCK
+// UniMaster is the hub that accumulates and distributes UNI
 //
 // Note that it's ownable and the owner wields tremendous power. The ownership
-// will be transferred to a governance smart contract once DUCK is sufficiently
+// will be transferred to a governance smart contract once UNI is sufficiently
 // distributed and the community can show to govern itself.
 //
-contract DuckMaster is Ownable {
+contract UniMaster is Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -1354,13 +1354,13 @@ contract DuckMaster is Ownable {
         uint256 rewardDebt; // Reward debt. See explanation below.
         address ref; // Ref address
         //
-        // We do some fancy math here. Basically, any point in time, the amount of DUCKs
+        // We do some fancy math here. Basically, any point in time, the amount of UNIs
         // entitled to a user but is pending to be distributed is:
         //
-        //   pending reward = (user.amount * pool.accDuckPerShare) - user.rewardDebt
+        //   pending reward = (user.amount * pool.accUniPerShare) - user.rewardDebt
         //
         // Whenever a user deposits or withdraws LP tokens to a pool. Here's what happens:
-        //   1. The pool's `accDuckPerShare` (and `lastRewardBlock`) gets updated.
+        //   1. The pool's `accUniPerShare` (and `lastRewardBlock`) gets updated.
         //   2. User receives the pending reward sent to his/her address.
         //   3. User's `amount` gets updated.
         //   4. User's `rewardDebt` gets updated.
@@ -1369,20 +1369,20 @@ contract DuckMaster is Ownable {
     // Info of each pool.
     struct PoolInfo {
         IERC20 lpToken;           // Address of LP token contract.
-        uint256 allocPoint;       // How many allocation points assigned to this pool. DUCKs to distribute per block.
-        uint256 lastRewardBlock;  // Last block number that DUCKs distribution occurs.
-        uint256 accDuckPerShare; // Accumulated DUCKs per share, times 1e12. See below.
+        uint256 allocPoint;       // How many allocation points assigned to this pool. UNIs to distribute per block.
+        uint256 lastRewardBlock;  // Last block number that UNIs distribution occurs.
+        uint256 accUNIPerShare; // Accumulated UNIs per share, times 1e12. See below.
     }
 
-    // The DUCK TOKEN!
-    DuckToken public duck;
+    // The UNI TOKEN!
+    UniToken public uni;
     // Dev address.
     address public devaddr;
-    // Block number when bonus DUCK period ends.
+    // Block number when bonus UNI period ends.
     uint256 public bonusEndBlock;
-    // DUCK tokens created per block.
-    uint256 public duckPerBlock;
-    // Bonus muliplier for early duck makers.
+    // UNI tokens created per block.
+    uint256 public uniPerBlock;
+    // Bonus muliplier for early uni makers.
     uint256 public constant BONUS_MULTIPLIER = 2;
     // dev shares 10.0%
     uint256 public constant DEV_SHARES = 10;
@@ -1393,7 +1393,7 @@ contract DuckMaster is Ownable {
     mapping (uint256 => mapping (address => UserInfo)) public userInfo;
     // Total allocation poitns. Must be the sum of all allocation points in all pools.
     uint256 public totalAllocPoint = 0;
-    // The block number when DUCK mining starts.
+    // The block number when UNI mining starts.
     uint256 public startBlock;
 
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
@@ -1406,15 +1406,15 @@ contract DuckMaster is Ownable {
     }
 
     constructor(
-        DuckToken _duck,
+        UniToken _uni,
         address _devaddr,
-        uint256 _duckPerBlock,
+        uint256 _uniPerBlock,
         uint256 _startBlock,
         uint256 _bonusEndBlock
     ) public {
-        duck = _duck;
+        uni = _uni;
         devaddr = _devaddr;
-        duckPerBlock = _duckPerBlock;
+        uniPerBlock = _uniPerBlock;
         bonusEndBlock = _bonusEndBlock;
         startBlock = _startBlock;
     }
@@ -1423,8 +1423,8 @@ contract DuckMaster is Ownable {
         return poolInfo.length;
     }
 
-    function changeDuckPerBlock(uint256 _newDuckPerBlock) public onlyOwner {
-        duckPerBlock = _newDuckPerBlock;
+    function changeUniPerBlock(uint256 _newUniPerBlock) public onlyOwner {
+        UniPerBlock = _newUniPerBlock;
     }
 
     // Detects whether the given pool already exists
@@ -1448,11 +1448,11 @@ contract DuckMaster is Ownable {
             lpToken: _lpToken,
             allocPoint: _allocPoint,
             lastRewardBlock: lastRewardBlock,
-            accDuckPerShare: 0
+            accUNIPerShare: 0
         }));
     }
 
-    // Update the given pool's DUCK allocation point. Can only be called by the owner.
+    // Update the given pool's UNI allocation point. Can only be called by the owner.
     function set(uint256 _pid, uint256 _allocPoint, bool _withUpdate) public onlyOwner validatePool(_pid) {
         if (_withUpdate) {
             massUpdatePools();
@@ -1474,18 +1474,18 @@ contract DuckMaster is Ownable {
         }
     }
 
-    // View function to see pending DUCKs on frontend.
-    function pendingDuck(uint256 _pid, address _user) external view returns (uint256) {
+    // View function to see pending UNIs on frontend.
+    function pendingUni(uint256 _pid, address _user) external view returns (uint256) {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
-        uint256 accDuckPerShare = pool.accDuckPerShare;
+        uint256 accUniPerShare = pool.accUniPerShare;
         uint256 lpSupply = pool.lpToken.balanceOf(address(this));
         if (block.number > pool.lastRewardBlock && lpSupply != 0) {
             uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
-            uint256 duckReward = multiplier.mul(duckPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
-            accDuckPerShare = accDuckPerShare.add(duckReward.mul(1e12).div(lpSupply));
+            uint256 uniard = multiplier.mul(uniPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
+            accUniShare = accUniPerShare.add(uniReward.mul(1e12).div(lpSupply));
         }
-        return user.amount.mul(accDuckPerShare).div(1e12).sub(user.rewardDebt);
+        return user.amount.mul(accUniShare).div(1e12).sub(user.rewardDebt);
     }
 
     // Update reward variables for all pools. Be careful of gas spending!
@@ -1508,14 +1508,14 @@ contract DuckMaster is Ownable {
             return;
         }
         uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
-        uint256 duckReward = multiplier.mul(duckPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
-        duck.mint(devaddr, duckReward.div(DEV_SHARES));
-        duck.mint(address(this), duckReward);
-        pool.accDuckPerShare = pool.accDuckPerShare.add(duckReward.mul(1e12).div(lpSupply));
+        uint256 uniard = multiplier.mul(uniPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
+        uni.mint(devaddr, uniReward.div(DEV_SHARES));
+        uni.mint(address(this), uniReward);
+        pool.accUniShare = pool.accUniShare.add(uniReward.mul(1e12).div(lpSupply));
         pool.lastRewardBlock = block.number;
     }
 
-    // Deposit LP tokens to DuckMaster for DUCK allocation.
+    // Deposit LP tokens to Uniter for UNIlocation.
     function deposit(uint256 _pid, uint256 _amount, address _ref) public validatePool(_pid) {
         require(_ref != msg.sender, "deposit: invalid ref address");
         PoolInfo storage pool = poolInfo[_pid];
@@ -1523,34 +1523,34 @@ contract DuckMaster is Ownable {
         updatePool(_pid);
 
         if (user.amount > 0) {
-            uint256 pending = user.amount.mul(pool.accDuckPerShare).div(1e12).sub(user.rewardDebt);
+            uint256 pending = user.amount.mul(pool.accUniShare).div(1e12).sub(user.rewardDebt);
             if(pending > 0) {
-                safeDuckTransfer(msg.sender, pending);
+                safeUninsfer(msg.sender, pending);
             }
         }
         if(_amount > 0) {
             pool.lpToken.safeTransferFrom(address(msg.sender), address(this), _amount);
             user.amount = user.amount.add(_amount);
         }
-        user.rewardDebt = user.amount.mul(pool.accDuckPerShare).div(1e12);      
+        user.rewardDebt = user.amount.mul(pool.accUniShare).div(1e12);      
         emit Deposit(msg.sender, _pid, _amount);
     }
 
-    // Withdraw LP tokens from DuckMaster.
+    // Withdraw LP tokens from Uniter.
     function withdraw(uint256 _pid, uint256 _amount) public validatePool(_pid) {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         require(user.amount >= _amount, "withdraw: not good");
         updatePool(_pid);
-        uint256 pending = user.amount.mul(pool.accDuckPerShare).div(1e12).sub(user.rewardDebt);
+        uint256 pending = user.amount.mul(pool.accUniShare).div(1e12).sub(user.rewardDebt);
         if(pending > 0) {
-            safeDuckTransfer(msg.sender, pending);
+            safeUninsfer(msg.sender, pending);
         }
         if(_amount > 0) {
             user.amount = user.amount.sub(_amount);
             pool.lpToken.safeTransfer(address(msg.sender), _amount);
         }
-        user.rewardDebt = user.amount.mul(pool.accDuckPerShare).div(1e12);
+        user.rewardDebt = user.amount.mul(pool.accUniShare).div(1e12);
         emit Withdraw(msg.sender, _pid, _amount);
     }
 
@@ -1564,13 +1564,13 @@ contract DuckMaster is Ownable {
         user.rewardDebt = 0;
     }
 
-    // Safe duck transfer function, just in case if rounding error causes pool to not have enough DUCKs.
-    function safeDuckTransfer(address _to, uint256 _amount) internal {
-        uint256 duckBal = duck.balanceOf(address(this));
-        if (_amount > duckBal) {
-            duck.transfer(_to, duckBal);
+    // Safe uni transfer function, just in case if rounding error causes pool to not have enough UNI
+    function safeUninsfer(address _to, uint256 _amount) internal {
+        uint256 uniBal = uni.balanceOf(address(this));
+        if (_amount > uniBal) {
+            uni.transfer(_to, uniBal);
         } else {
-            duck.transfer(_to, _amount);
+            uni.transfer(_to, _amount);
         }
     }
 
