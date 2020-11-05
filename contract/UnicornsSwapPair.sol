@@ -28,8 +28,8 @@ pragma solidity =0.6.12;
 contract UniswapV2ERC20 {
     using SafeMathUniswap for uint;
 
-    string public constant name = 'DrakeSwap LP';
-    string public constant symbol = 'DLP';
+    string public constant name = 'UnicornsSwap LP';
+    string public constant symbol = 'UNI';
     uint8 public constant decimals = 18;
     uint  public totalSupply;
     mapping(address => uint) public balanceOf;
