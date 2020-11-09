@@ -174,9 +174,9 @@ contract UNI_FARM_USDT is Auth {
       return;
     }
     uint claimableUni = getClaimableUni(farmer);
-    uniToken.transfer(msg.sender, claimableBsc);
+    uniToken.transfer(msg.sender, claimableUni);
     farmer.lastClaimedBlock = block.number;
-    emit Claimed(msg.sender, claimableBsc);
+    emit Claimed(msg.sender, claimableUni);
   }
 
   function leave() public {
